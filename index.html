@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Caffe Bar Toni-Benz — Cjenik</title>
+  <style>
+    :root { --bg:#0b0c0f; --card:#141622; --text:#f3f4f6; --muted:#a7adc0; --line:#23263a; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text);}
+    .wrap{max-width:920px;margin:0 auto;padding:18px;}
+    .top{
+      background:linear-gradient(135deg,#1a1d2e,#111322);
+      border:1px solid var(--line); border-radius:18px; padding:18px;
+      position:sticky; top:10px; z-index:2; backdrop-filter: blur(6px);
+    }
+    h1{margin:0 0 6px;font-size:22px}
+    .meta{color:var(--muted); font-size:14px; line-height:1.4}
+    .row{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap}
+    input{
+      flex:1; min-width:240px; padding:12px 12px; border-radius:14px;
+      border:1px solid var(--line); background:#0f1020; color:var(--text);
+      outline:none;
+    }
+    .pill{
+      padding:10px 12px; border-radius:999px; border:1px solid var(--line);
+      background:#0f1020; color:var(--muted); font-size:13px;
+    }
+    .grid{display:grid; gap:12px; margin-top:14px;}
+    details{
+      border:1px solid var(--line); border-radius:18px; background:var(--card);
+      overflow:hidden;
+    }
+    summary{
+      list-style:none; cursor:pointer; padding:14px 14px; font-weight:700;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+    }
+    summary::-webkit-details-marker{display:none}
+    .count{color:var(--muted); font-weight:600; font-size:13px}
+    .items{border-top:1px solid var(--line); padding:8px 12px;}
+    .item{
+      display:flex; justify-content:space-between; gap:10px;
+      padding:10px 4px; border-bottom:1px dashed #2b2f49;
+    }
+    .item:last-child{border-bottom:none}
+    .name{color:var(--text); font-size:15px}
+    .sub{color:var(--muted); font-size:12px; margin-top:2px}
+    .price{font-weight:800; white-space:nowrap}
+    .footer{color:var(--muted); font-size:12px; text-align:center; margin:18px 0 6px}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Caffe Bar Toni-Benz — Cjenik</h1>
+      <div class="meta">
+        Hrvatskih Branitelja 25, 21264 Donji Proložac<br/>
+        Radno vrijeme: <b>06:00 – 24:00</b>
+      </div>
+
+      <div class="row">
+        <input id="q" type="search" placeholder="Pretraži (npr. espresso, cola, točeno, gin...)" autocomplete="off" />
+        <div class="pill" id="hits">Sve stavke</div>
+      </div>
+    </div>
+
+    <div class="grid" id="menu"></div>
+
+    <div class="footer">
+      Cijene su u eurima. U slučaju razlike, važeća je cijena na blagajni.
+    </div>
+  </div>
+
+  <script>
+    // DATA is now loaded from external JSON
+    let DATA = [];
+
+    async function loadData() {
+      const res = await fetch("./data/menu.json", { cache: "no-store" });
+      const json = await res.json();
+      DATA = json.sections || [];
+    }
+
+    const eur = (x) => x.toFixed(2).replace(".", ",") + " €";
+
+    const menu = document.getElementById("menu");
+    const q = document.getElementById("q");
+    const hits = document.getElementById("hits");
+
+    function render(filter="") {
+      menu.innerHTML = "";
+      let totalVisible = 0;
+
+      const f = filter.trim().toLowerCase();
+
+      DATA.forEach((section, idx) => {
+        const items = section.items.filter(it => {
+          const hay = (it.n + " " + (it.s||"") + " " + section.cat).toLowerCase();
+          return !f || hay.includes(f);
+        });
+
+        if (!items.length) return;
+
+        totalVisible += items.length;
+
+        const d = document.createElement("details");
+        d.open = !f; // kad je pretraga aktivna, neka bude otvoreno? (ne) — držimo zatvoreno
+        if (f) d.open = true;
+
+        const s = document.createElement("summary");
+        s.innerHTML = `<span>${section.cat}</span><span class="count">${items.length} stavki</span>`;
+        d.appendChild(s);
+
+        const box = document.createElement("div");
+        box.className = "items";
+
+        items.forEach(it => {
+          const row = document.createElement("div");
+          row.className = "item";
+          row.innerHTML = `
+            <div>
+              <div class="name">${it.n}</div>
+              ${it.s ? `<div class="sub">${it.s}</div>` : ``}
+            </div>
+            <div class="price">${eur(it.p)}</div>
+          `;
+          box.appendChild(row);
+        });
+
+        d.appendChild(box);
+        menu.appendChild(d);
+      });
+
+      hits.textContent = f ? `Pronađeno: ${totalVisible}` : "Sve stavke";
+      if (!DATA.length) hits.textContent = "Nema stavki";
+    }
+
+    q.addEventListener("input", (e) => render(e.target.value));
+
+    (async () => {
+      await loadData();
+      q.addEventListener("input", (e) => render(e.target.value));
+      render();
+    })();
+  </script>
+</body>
+</html>

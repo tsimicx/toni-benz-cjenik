@@ -1,0 +1,39 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "assets"
+public_folder: "/assets"
+
+collections:
+  - name: "menu"
+    label: "Price List"
+    files:
+      - label: "Menu Data"
+        name: "menu"
+        file: "data/menu.json"
+        format: "json"
+        fields:
+          - label: "Categories"
+            name: "sections"
+            widget: "list"
+            fields:
+              - label: "Category name"
+                name: "cat"
+                widget: "string"
+              - label: "Items"
+                name: "items"
+                widget: "list"
+                fields:
+                  - label: "Name"
+                    name: "n"
+                    widget: "string"
+                  - label: "Description / Volume"
+                    name: "s"
+                    widget: "string"
+                    required: false
+                  - label: "Price (€)"
+                    name: "p"
+                    widget: "number"
+                    value_type: "float"
+                    min: 0
